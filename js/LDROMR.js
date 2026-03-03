@@ -124,7 +124,7 @@ LDR.OMR.FixPlacements = function(ldrLoader) {
 
     function convert(x) {
         x = x.toFixed(3);
-        for(var i = 0; i < 3; i++) {
+        for(let i = 0; i < 3; i++) {
             var tmp = parseFloat(x).toFixed(i);
             if(parseFloat(tmp) === parseFloat(x)) {
                 return Number(tmp);

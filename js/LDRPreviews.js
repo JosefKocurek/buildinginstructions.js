@@ -47,7 +47,7 @@ LDR.Previews = function(options, optionsEle) {
     this.elements = document.getElementsByClassName('part_icon');
 
     // Resize immediately:
-    for(var i = 0; i < this.elements.length; i++) {
+    for(let i = 0; i < this.elements.length; i++) {
         let e = this.elements[i];
         e.style.width = this.w + 'px';
         e.style.height = this.h + 'px';
@@ -177,7 +177,7 @@ LDR.Previews.prototype.initiate = function() {
     let inWindow = x => (0 <= x && x <= window.innerHeight);
 
     let lazy_load = function() {
-        for(var i = 0; i < self.elements.length; i++) {
+        for(let i = 0; i < self.elements.length; i++) {
             var b = self.elements[i].getBoundingClientRect();
             if(inWindow(b.top) || inWindow(b.bottom)) {
                 load(self.elements[i].id);
@@ -266,7 +266,7 @@ LDR.Previews.prototype.createBigPreview = function() {
 
     // Register listeners:
     bg.addEventListener('click', ()=>self.pliPreviewer.hidePliPreview());
-    for(var i = 0; i < this.elements.length; i++) {
+    for(let i = 0; i < this.elements.length; i++) {
         let e = this.elements[i];
         e.parentElement.addEventListener('click', ()=>showPreview(e.id));
         e.parentElement.style.cursor = 'pointer';

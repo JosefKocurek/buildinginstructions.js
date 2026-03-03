@@ -84,7 +84,7 @@ Object.assign( THREE.EffectComposer.prototype, {
 	    pass.setSize( this._width * this._pixelRatio, this._height * this._pixelRatio );
         },
         isLastEnabledPass: function ( passIndex ) {
-            for ( var i = passIndex + 1; i < this.passes.length; i ++ ) {
+            for ( let i = passIndex + 1; i < this.passes.length; i ++ ) {
                 if ( this.passes[ i ].enabled ) {
                     return false;
                 }

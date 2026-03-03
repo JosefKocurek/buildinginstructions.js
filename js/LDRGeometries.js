@@ -291,7 +291,7 @@ THREE.BufferGeometry.prototype.computeVertexNormals = function() {
     
     var index = this.index;
     var indices = index.array;
-    for(var i = 0, il = index.count; i < il; i += 3) {            
+    for(let i = 0, il = index.count; i < il; i += 3) {            
         vA = indices[i] * 3;
         vB = indices[i+1] * 3;
         vC = indices[i+2] * 3;

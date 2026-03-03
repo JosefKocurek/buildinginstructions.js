@@ -246,7 +246,8 @@ THREE.LDRLoader.prototype.parse = function(data, defaultID) {
     let inTexmapFallback = false;
 
     let dataLines = data.split(/(\r\n)|\n/);
-    for(let i = 0; i < dataLines.length; i++) {
+    let i;
+    for(i = 0; i < dataLines.length; i++) {
 	let line = dataLines[i];
 	if(!line) {
 	    continue; // Empty line, or 'undefined' due to '\r\n' split.
@@ -457,7 +458,8 @@ THREE.LDRLoader.prototype.parse = function(data, defaultID) {
                 let encodedContent = '';
                 // Parse encoded content:
                 i++;
-                for(; i < dataLines.length; i++) {
+                for(let iData = i; iData < dataLines.length; iData++) {
+                    i = iData;
                     line = dataLines[i];
                     if(!line) {
                         continue; // No line
