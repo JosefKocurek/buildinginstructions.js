@@ -521,10 +521,10 @@
           LDR.BackgroundColors = ['FFFFFF', 'EFF2EF', 'EFF2EF', 'EFF2EF', 'EFF2EF', 'EFF2EF', 'EFF2EF', 'EFF2EF'];
         }
         // idToUrl: search ldraw_parts, ldraw_unofficial, then official/ and unofficial/ (LDraw layout).
-        // For s/xxx.dat also try ldraw_parts/xxx.dat (flat) so both folder and flat layout work.
+        // For .ldr/.mpd (main model) vracíme původní cestu – Vercel je case-sensitive (models/DSH.ldr, ne dsh.ldr).
         function idToUrl(id) {
           var lowerID = id.toLowerCase();
-          if (!lowerID.endsWith('.dat')) return [lowerID];
+          if (!lowerID.endsWith('.dat')) return [id];
           var urls = ['ldraw_parts/' + lowerID, 'ldraw_unofficial/' + lowerID];
           if (lowerID.startsWith('48/') || lowerID.startsWith('8/')) {
             urls.push('official/p/' + lowerID, 'unofficial/p/' + lowerID);
