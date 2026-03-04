@@ -91,6 +91,31 @@
     }
     .intro-actions a.intro-pdf-link { box-shadow: 3px 3px 0 #000; }
     .intro-actions a.intro-pdf-link:hover { background: #000; color: #fff; }
+    /* Loading overlay (po kliknutí Začít stavět, do načtení modelu) */
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+      font-size: 1.1rem;
+      color: #000;
+    }
+    #loading-overlay.hidden { display: none; }
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #e0e0e0;
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: loading-spin 0.8s linear infinite;
+    }
+    @keyframes loading-spin { to { transform: rotate(360deg); } }
     /* Instructions view: full viewport, no overflow scroll */
     #instructions-view {
       display: flex;
@@ -415,6 +440,11 @@
     </div>
   </div>
 
+  <div id="loading-overlay" class="hidden" aria-live="polite">
+    <div class="loading-spinner" aria-hidden="true"></div>
+    <span>Načítám…</span>
+  </div>
+
   <!-- Instructions view (required DOM for buildinginstructions.js) -->
   <div id="instructions-view">
     <div id="main_canvas_holder">
@@ -673,8 +703,27 @@
 
       document.getElementById('btn-start').addEventListener('click', function() {
         document.getElementById('intro').classList.add('hidden');
+        document.getElementById('loading-overlay').classList.remove('hidden');
         main();
+        waitForModelThenHideLoading();
       });
+
+      function waitForModelThenHideLoading() {
+        var overlay = document.getElementById('loading-overlay');
+        function check() {
+          var el = document.getElementById('numberOfSteps');
+          if (el && (el.textContent || el.innerText || '').match(/\/\s*\d+/)) {
+            overlay.classList.add('hidden');
+            return true;
+          }
+          return false;
+        }
+        if (check()) return;
+        var t = setInterval(function() {
+          if (check()) clearInterval(t);
+        }, 150);
+        setTimeout(function() { clearInterval(t); overlay.classList.add('hidden'); }, 30000);
+      }
 
       (function introMouseSway() {
         var title = document.getElementById('intro-title');
