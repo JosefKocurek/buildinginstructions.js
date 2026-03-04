@@ -588,6 +588,7 @@
         document.getElementById('instructions-view').style.display = '';
         manager = new LDR.InstructionsManager(model, '#', 14, null, function(){}, baseURL, step, options);
         window.manager = manager;
+        manager.clickDone = function() { window.location = 'done.html'; };
         setupStepSlider();
         setupCameraPrevButton();
         setupMoveNextDoneToCamera();
