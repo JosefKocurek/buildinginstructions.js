@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <title>To čubrním — DSH</title>
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&display=swap" rel="stylesheet" />
+  <!-- Library layout (required for engine) -->
+  <link href="css/instructions.css" rel="stylesheet" type="text/css" />
+  <link href="css/preview.css" rel="stylesheet" type="text/css" />
+  <link href="css/buttons.css" rel="stylesheet" type="text/css" />
+  <!-- Bricolage Grotesque + brutalist minimal UI -->
+  <style>
+    * { box-sizing: border-box; }
+    html { height: 100%; overflow: hidden; }
+    body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #fff; color: #000; font-family: 'Bricolage Grotesque', system-ui, sans-serif; }
+    /* Intro screen */
+    #intro {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: #fff;
+      padding: 1rem;
+    }
+    #intro.hidden { display: none; }
+    .intro-title {
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+      font-size: clamp(4rem, 20vw, 12rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      text-transform: none;
+      text-align: center;
+      width: 100%;
+      max-width: 100vw;
+      margin: 0;
+      transform: rotate(calc(-2deg + var(--sway-x, 0deg))) translate(calc(var(--sway-tx, 0) * 1px), calc(var(--sway-ty, 0) * 1px));
+      transition: transform 0.15s ease-out;
+    }
+    .intro-actions {
+      margin-top: 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      align-items: center;
+    }
+    .intro-actions button {
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+      min-width: 240px;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+      text-transform: none;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      border: 1px solid #000;
+      background: transparent;
+      color: #000;
+      box-shadow: 3px 3px 0 #000;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .intro-actions button:hover {
+      background: #000;
+      color: #fff;
+    }
+    .intro-actions button.placeholder {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .intro-actions a.intro-pdf-link {
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+      min-width: 240px;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+      text-decoration: none;
+      color: #000;
+      border: 1px solid #000;
+      background: transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+    .intro-actions a.intro-pdf-link { box-shadow: 3px 3px 0 #000; }
+    .intro-actions a.intro-pdf-link:hover { background: #000; color: #fff; }
+    /* Instructions view: full viewport, no overflow scroll */
+    #instructions-view {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+      max-height: -webkit-fill-available;
+      width: 100%;
+      position: relative;
+      background: #fff;
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+      overflow: hidden;
+    }
+    #main_canvas_holder {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      display: block;
+    }
+    /* Sub-model / editor area */
+    #green { background: #EFF2EF !important; min-height: 0; }
+    /* Top bar: step indicator centered, close right */
+    #top_buttons {
+      display: flex !important;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem 1rem;
+      height: auto !important;
+      min-height: 56px;
+      padding: 1.25rem 1rem 0.75rem;
+      border-bottom: 1px solid #000;
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+    }
+    #top_buttons .top_step_spacer { flex: 1; min-width: 0; }
+    #top_buttons .top_step_right_wrap { flex: 1; display: flex; justify-content: flex-end; align-items: center; min-width: 0; }
+    #top_step_center {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    #top_buttons .top_button {
+      width: auto !important;
+      height: auto !important;
+      min-width: 0;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      border: 1px solid #000;
+      background: #fff;
+      color: #000;
+      box-shadow: 3px 3px 0 #000;
+    }
+    #top_buttons .top_button:hover { background: #000; color: #fff; }
+    #top_buttons .top_button svg { display: none !important; }
+    #prev_button, #next_button { display: none !important; }
+    #next_button_large svg { display: none !important; }
+    #next_button_large::before { content: 'Další krok'; font-size: 1rem; padding: 0.5rem 1rem; }
+    #done_button svg { display: none !important; }
+    #done_button::before { content: 'Hotovo'; font-size: 1rem; padding: 0.5rem 1rem; }
+    #next_button_large {
+      width: auto !important;
+      height: auto !important;
+      min-width: 8rem;
+      min-height: 2.5rem;
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+      border: 1px solid #000;
+      background: #000;
+      color: #fff;
+      box-shadow: 3px 3px 0 #000;
+    }
+    #next_button_large:hover { background: #333; color: #fff; }
+    #done_button {
+      width: auto !important;
+      height: auto !important;
+      min-width: 8rem;
+      min-height: 2.5rem;
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+      border: 1px solid #000;
+      background: #fff;
+      color: #000;
+      box-shadow: 3px 3px 0 #000;
+    }
+    #done_button:hover { background: #000; color: #fff; }
+    #stepToContainer, #numberOfSteps { position: static !important; font-size: 1.25rem !important; font-weight: 600; }
+    #stepToContainer input {
+      width: 3rem !important;
+      font-size: 1.25rem !important;
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+      border: 1px solid #000;
+      background: #fff;
+      text-align: center;
+      padding: 0.25rem;
+      box-shadow: 3px 3px 0 #000;
+    }
+    #numberOfSteps { margin-left: 0.25rem; }
+    #step_slider_wrap { display: inline-flex; align-items: center; gap: 0.5rem; }
+    #step_slider {
+      width: 120px;
+      max-width: 20vw;
+      height: 6px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: #e0e0e0;
+    }
+    #step_slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      background: #000;
+      cursor: pointer;
+    }
+    #step_slider::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      background: #000;
+      cursor: pointer;
+      border: none;
+    }
+    /* Camera row: all buttons in one line (Další krok, Hotovo moved here) */
+    #camera_buttons {
+      display: flex !important;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      height: auto !important;
+      min-height: 48px;
+      padding: 1rem 0.5rem;
+      border-top: 1px solid #000;
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+    }
+    #camera_buttons #next_button_large,
+    #camera_buttons #done_button {
+      position: relative !important;
+      right: auto !important;
+      bottom: auto !important;
+      width: auto !important;
+      height: auto !important;
+    }
+    #camera_buttons svg { display: none !important; }
+    #zoom_in_button, #zoom_out_button { display: none !important; }
+    #camera_prev_button, #reset_camera_button, #zoom_in_button_large, #zoom_out_button_large,
+    #next_button_large, #done_button {
+      box-shadow: 3px 3px 0 #000;
+    }
+    #camera_prev_button, #reset_camera_button, #zoom_in_button_large, #zoom_out_button_large {
+      width: auto !important;
+      height: auto !important;
+      min-width: 2.5rem;
+      min-height: 2.5rem;
+      padding: 0.4rem 0.6rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: 1px solid #000;
+      background: #fff;
+      color: #000;
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+    }
+    #camera_prev_button:hover, #reset_camera_button:hover,
+    #zoom_in_button_large:hover, #zoom_out_button_large:hover { background: #000; color: #fff; }
+    #camera_prev_button::before { content: 'Předchozí krok'; font-size: 0.9rem; }
+    #reset_camera_button::before { content: '⟲'; }
+    #zoom_in_button_large::before { content: '+'; }
+    #zoom_out_button_large::before { content: '−'; }
+    .preserve-view-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding-left: 0.5rem;
+      margin-left: 0.25rem;
+      border-left: 1px solid #000;
+    }
+    .preserve-view-wrap input { cursor: pointer; accent-color: #000; }
+    #main_canvas_holder, #main_canvas { background: #fff !important; }
+    .pli-wrapper { position: relative; display: inline-block; }
+    #pli { border: 1px solid #000; background: #fff !important; cursor: grab; }
+    #pli:active { cursor: grabbing; }
+    .pli-drag-hint {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 0.9rem;
+      color: #000;
+      pointer-events: none;
+      line-height: 1;
+    }
+    #pli_drag_horizontal svg, #pli_drag_vertical svg { display: none !important; }
+    /* Větší klikatelná zóna pro posun PLI (min. 44px pro dotyk) */
+    #pli_icon_left, #pli_icon_right, #pli_icon_up, #pli_icon_down {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0.5rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: inherit;
+    }
+    #pli_icon_left::before { content: '←'; font-size: 1rem; font-weight: 700; }
+    #pli_icon_right::before { content: '→'; font-size: 1rem; font-weight: 700; }
+    #pli_icon_up::before { content: '↑'; font-size: 1rem; font-weight: 700; }
+    #pli_icon_down::before { content: '↓'; font-size: 1rem; font-weight: 700; }
+    #empty_step { border: 1px dotted #000; color: #000; font-family: 'Bricolage Grotesque', system-ui, sans-serif; }
+    #instructions_decorations svg { stroke: #000; fill: none; }
+    #multiplier, #rotator { color: #000; }
+    .background { background: #000 !important; opacity: 0.85; }
+    .holder { background: #fff !important; border: 1px solid #000; color: #000; font-family: 'Bricolage Grotesque', system-ui, sans-serif; }
+    #preview_info { background: #000 !important; color: #fff; font-family: 'Bricolage Grotesque', system-ui, sans-serif; }
+    #preview_info a { color: #fff; }
+    #done_holder { background: #fff; border: 1px solid #000; color: #000; }
+    #home_button {
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+      min-width: 2.5rem;
+      min-height: 2.5rem;
+      font-size: 1.5rem;
+      line-height: 1;
+      flex-shrink: 0;
+      width: auto;
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      text-decoration: none;
+      box-sizing: border-box;
+    }
+    #home_button svg { display: none !important; }
+    #home_button::before { content: '×'; }
+    /* Anotace dílů (PLI): černé pozadí, bílý text – přepsání všude */
+    .annotation, .annotation_round {
+      background-color: #000 !important;
+      color: #fff !important;
+      border: 1px solid #000 !important;
+      border-radius: 0 !important;
+    }
+
+    /* ========== Responzivní UI (mobil / tablet) ========== */
+    @media (max-width: 768px) {
+      #top_buttons {
+        flex-wrap: wrap;
+        padding: 0.75rem 0.5rem;
+        min-height: 48px;
+      }
+      #top_step_center {
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        justify-content: center;
+      }
+      #stepToContainer input { width: 2.5rem !important; font-size: 1.1rem !important; }
+      #numberOfSteps { font-size: 1.1rem !important; }
+      #step_slider { width: 80px; max-width: 25vw; }
+      #step_slider::-webkit-slider-thumb { width: 20px; height: 20px; }
+      #step_slider::-moz-range-thumb { width: 20px; height: 20px; }
+      #home_button {
+        min-width: 44px;
+        min-height: 44px;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+      }
+      #camera_buttons {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.35rem;
+        padding: 0.75rem 0.35rem;
+        min-height: 44px;
+      }
+      #camera_prev_button, #reset_camera_button, #zoom_in_button_large, #zoom_out_button_large,
+      #next_button_large, #done_button {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0.5rem;
+      }
+      #camera_prev_button::before { font-size: 0.8rem; }
+      #next_button_large, #done_button {
+        min-width: 7rem;
+        min-height: 44px;
+      }
+      .preserve-view-wrap {
+        font-size: 0.8rem;
+        padding-left: 0.35rem;
+        margin-left: 0.2rem;
+      }
+      /* PLI vždy pod top_buttons (i při zalamování). Bez max-width na canvasu – knihovna řídí velikost, jinak se obrázky a čísla deformují. */
+      #instructions_decorations { top: 72px !important; }
+      .pli-drag-hint { font-size: 0.75rem; top: 2px; right: 2px; }
+    }
+
+    @media (max-width: 480px) {
+      #top_buttons { padding: 0.5rem 0.35rem; }
+      #top_step_center { gap: 0.25rem; }
+      #step_slider { width: 60px; }
+      #camera_buttons { padding: 0.5rem 0.25rem; gap: 0.25rem; }
+      #next_button_large::before, #done_button::before { font-size: 0.9rem; padding: 0.35rem 0.6rem; }
+      #next_button_large, #done_button { min-width: 6rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Intro screen -->
+  <div id="intro">
+    <h1 class="intro-title" id="intro-title">To čubrním</h1>
+    <div class="intro-actions">
+      <button type="button" id="btn-start">Začít stavět</button>
+      <a href="models/Model_book%200.7.pdf" download class="intro-pdf-link">Stáhnout PDF <span aria-hidden="true">↓</span></a>
+    </div>
+  </div>
+
+  <!-- Instructions view (required DOM for buildinginstructions.js) -->
+  <div id="instructions-view">
+    <div id="main_canvas_holder">
+      <canvas id="main_canvas"></canvas>
+      <div id="instructions_decorations">
+        <span id="empty_step">EMPTY STEP</span>
+        <div class="pli-wrapper">
+          <canvas id="pli" title="Přetáhněte pro posun"></canvas>
+          <span class="pli-drag-hint" aria-hidden="true">⋮⋮</span>
+        </div>
+        <div id="pli_drag_horizontal">
+          <div id="pli_icon_right"><svg viewBox="-10,-10,20,20"><path d="M 9 6 9 9 -9 9 -9 -9 9 -9 9 -6"/><line x1="0" y1="0" x2="9" y2="0"/><line x1="9" y1="0" x2="5" y2="5"/><line x1="9" y1="0" x2="5" y2="-5"/></svg></div>
+          <div id="pli_icon_left"><svg viewBox="-10,-10,20,20"><path d="M -9 6 -9 9 9 9 9 -9 -9 -9 -9 -6"/><line x1="0" y1="0" x2="-9" y2="0"/><line x1="-9" y1="0" x2="-5" y2="5"/><line x1="-9" y1="0" x2="-5" y2="-5"/></svg></div>
+        </div>
+        <div id="pli_drag_vertical">
+          <div id="pli_icon_down"><svg viewBox="-10,-10,20,20"><path d="M 6 9 9 9 9 -9 -9 -9 -9 9 -6 9"/><line x1="0" y1="0" x2="0" y2="9"/><line x1="0" y1="9" x2="5" y2="5"/><line x1="0" y1="9" x2="-5" y2="5"/></svg></div>
+          <div id="pli_icon_up"><svg viewBox="-10,-10,20,20"><path d="M 6 -9 9 -9 9 9 -9 9 -9 -9 -6 -9"/><line x1="0" y1="0" x2="0" y2="-9"/><line x1="0" y1="-9" x2="5" y2="-5"/><line x1="0" y1="-9" x2="-5" y2="-5"/></svg></div>
+        </div>
+        <span class="decoration_holder"><div id="multiplier">x1</div></span>
+        <span class="decoration_holder">
+          <div id="rotator">
+            <svg viewBox="-52,-52,104,104" fill="none" stroke="black" stroke-width="12" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+              <g id="full_arrow">
+                <path id="half_arrow" d="M 25,-14 40,-10 48,-23 M 40,-10 C 30,-50 -30,-50 -40,-10 M 40,-10 Z"/>
+                <g transform="scale(-1 -1)"><use xlink:href="#half_arrow"/></g>
+              </g>
+              <animateTransform xlink:href="#full_arrow" attributeName="transform" attributeType="XML" id="rotator_animation" type="rotate" from="0 0 0" to="180 0 0" dur="0.4s" begin="0" repeatCount="1" fill="freeze"/>
+            </svg>
+          </div>
+        </span>
+      </div>
+    </div>
+    <div id="pli_preview_section">
+      <div id="preview_background" class="background" onclick="if(window.manager) manager.hidePliPreview();"></div>
+      <div id="preview_holder" class="holder">
+        <div id="preview_parent"><canvas id="secondary_canvas"></canvas></div>
+        <div id="preview_info">
+          <span class="preview_info_line"><span id="preview_info_name">PART NAME</span> <a id="preview_info_bh_link" href="" target="_blank">Go to part</a> or <a id="preview_info_bl_link" href="" target="_blank">See on BrickLink</a></span>
+          <span class="preview_info_line">LDraw color: <div id="preview_info_color_ldraw">LDR COLOR</div></span>
+          <span class="preview_info_line">LEGO/LDD color: <div id="preview_info_color_lego">LDD COLOR</div></span>
+          <span class="preview_info_line">Bricklink: <div id="preview_info_id_bricklink">ID</div> in color <div id="preview_info_color_bricklink">COLOR</div></span>
+        </div>
+      </div>
+    </div>
+    <div id="done_section">
+      <div id="done_background" onclick="if(window.manager) manager.hideDone();"></div>
+      <div id="done_holder" class="holder"></div>
+    </div>
+    <div id="color_picker">
+      <div id="color_picker_background" class="background"></div>
+      <div id="color_picker_holder" class="holder"></div>
+    </div>
+    <div id="green"><div id="editor"></div></div>
+    <div id="options"></div>
+  </div>
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/three.min.js"></script>
+  <script src="js/OrbitControls.js"></script>
+  <script src="js/CopyShader.js"></script>
+  <script src="js/Pass.js"></script>
+  <script src="js/OutlinePass.js"></script>
+  <script src="js/ShaderPass.js"></script>
+  <script src="js/FXAAShader.js"></script>
+  <script src="js/RenderPass.js"></script>
+  <script src="js/MaskPass.js"></script>
+  <script src="js/EffectComposer.js"></script>
+  <script src="js/colors.js"></script>
+  <script src="js/LDRShaders.js"></script>
+  <script src="js/LDRColorMaterials.js"></script>
+  <script src="js/pli.js"></script>
+  <script src="js/LDRSVG.js"></script>
+  <script src="js/LDROptions.js"></script>
+  <script src="js/ClientStorage.js"></script>
+  <script src="js/LDRGeometries.js"></script>
+  <script src="js/LDRLoader.js"></script>
+  <script src="js/LDRStepHandler.js"></script>
+  <script src="js/RectanglePacking.js"></script>
+  <script src="js/LDRPLIBuilder.js"></script>
+  <script src="js/LDRPLIPreview.js"></script>
+  <script src="js/LDRButtons.js"></script>
+  <script src="js/LDRMeasurer.js"></script>
+  <script src="js/LDRColorPicker.js"></script>
+  <script src="js/LDRStepEditor.js"></script>
+  <script src="js/LDRGenerator.js"></script>
+  <script src="js/LDRStuds.js"></script>
+  <script src="js/LDRAssemblies.js"></script>
+  <script src="js/LDRInstructionsManager.js"></script>
+  <script src="js/LDCadGenerator.js"></script>
+
+  <script>
+    (function() {
+      // Serve via HTTP (e.g. python3 -m http.server 8080). If port is in use, try another (e.g. 8080).
+      // Missing parts: run node scripts/download-ldraw-parts.js --list scripts/missing-dsh-parts.txt
+      var model = 'models/DSH.ldr';
+      var baseURL = 'dsh-viewer.html?step=';
+      var manager;
+      var mainStarted = false;
+
+      function main() {
+        if (mainStarted) return;
+        mainStarted = true;
+        if (typeof LDR !== 'undefined' && LDR.BackgroundColors) {
+          LDR.BackgroundColors = ['FFFFFF', 'EFF2EF', 'EFF2EF', 'EFF2EF', 'EFF2EF', 'EFF2EF', 'EFF2EF', 'EFF2EF'];
+        }
+        // idToUrl: search ldraw_parts, ldraw_unofficial, then official/ and unofficial/ (LDraw layout).
+        // For s/xxx.dat also try ldraw_parts/xxx.dat (flat) so both folder and flat layout work.
+        function idToUrl(id) {
+          var lowerID = id.toLowerCase();
+          if (!lowerID.endsWith('.dat')) return [lowerID];
+          var urls = ['ldraw_parts/' + lowerID, 'ldraw_unofficial/' + lowerID];
+          if (lowerID.startsWith('48/') || lowerID.startsWith('8/')) {
+            urls.push('official/p/' + lowerID, 'unofficial/p/' + lowerID);
+          } else if (lowerID.startsWith('s/')) {
+            urls.push('ldraw_parts/' + lowerID.replace(/^s\//, '')); // flat fallback
+            urls.push('ldraw_unofficial/' + lowerID.replace(/^s\//, ''));
+            urls.push('official/parts/' + lowerID, 'unofficial/parts/' + lowerID);
+          } else if (lowerID.match(/^[a-z][a-z].*\.dat$/)) {
+            urls.push('official/p/' + lowerID, 'official/parts/' + lowerID, 'unofficial/p/' + lowerID, 'unofficial/parts/' + lowerID);
+          } else {
+            urls.push('official/parts/' + lowerID, 'official/p/' + lowerID, 'unofficial/parts/' + lowerID, 'unofficial/p/' + lowerID);
+          }
+          return urls;
+        }
+        var options = {
+          canEdit: false,
+          buildAssemblies: true,
+          key: model,
+          adPeek: 0,
+          setUpOptions: false,
+          showNumberOfSteps: true,
+          pliMaxWidthPercentage: 20,
+          pliMaxHeightPercentage: 20,
+          timestamp: '1970-01-01 00:00:00',
+          cleanUpPrimitivesAndSubParts: true,
+          idToUrl: idToUrl
+        };
+        var step = 1;
+        var stepFromUrl = location.search.slice(1).split('&').map(function(x) { return x.split('='); }).find(function(x) { return x[0] === 'step'; });
+        if (stepFromUrl && stepFromUrl[1]) step = parseInt(stepFromUrl[1], 10) || 1;
+        document.getElementById('instructions-view').style.display = '';
+        manager = new LDR.InstructionsManager(model, '#', 14, null, function(){}, baseURL, step, options);
+        window.manager = manager;
+        setupStepSlider();
+        setupCameraPrevButton();
+        setupMoveNextDoneToCamera();
+        setupPreserveViewToggle();
+        setupHomeClose();
+      }
+
+      function setupPreserveViewToggle() {
+        var cam = document.getElementById('camera_buttons');
+        if (!cam || document.getElementById('preserve_view_checkbox')) return;
+        var saved = localStorage.getItem('dsh_preserve_view') === '1';
+        if (window.manager) window.manager.preserveViewOnStepChange = saved;
+        var wrap = document.createElement('label');
+        wrap.className = 'preserve-view-wrap';
+        wrap.setAttribute('for', 'preserve_view_checkbox');
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.id = 'preserve_view_checkbox';
+        cb.checked = saved;
+        cb.addEventListener('change', function() {
+          var on = cb.checked;
+          if (window.manager) window.manager.preserveViewOnStepChange = on;
+          localStorage.setItem('dsh_preserve_view', on ? '1' : '0');
+        });
+        wrap.appendChild(cb);
+        wrap.appendChild(document.createTextNode('Zachovat pohled'));
+        cam.insertBefore(wrap, document.getElementById('next_button_large') || cam.lastChild);
+      }
+
+      function setupMoveNextDoneToCamera() {
+        var cam = document.getElementById('camera_buttons');
+        var nextLarge = document.getElementById('next_button_large');
+        var done = document.getElementById('done_button');
+        if (cam && nextLarge) cam.appendChild(nextLarge);
+        if (cam && done) cam.appendChild(done);
+      }
+
+      function setupCameraPrevButton() {
+        var cam = document.getElementById('camera_buttons');
+        if (!cam || document.getElementById('camera_prev_button')) return;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'camera_prev_button';
+        btn.setAttribute('class', 'ui_control');
+        btn.addEventListener('click', function() {
+          if (window.manager) window.manager.prevStep();
+        });
+        cam.insertBefore(btn, cam.firstChild);
+      }
+
+      function setupStepSlider() {
+        var topButtons = document.getElementById('top_buttons');
+        var numberOfStepsEl = document.getElementById('numberOfSteps');
+        var pageNumberInput = document.getElementById('pageNumber');
+        var stepToContainer = document.getElementById('stepToContainer');
+        if (!topButtons || !numberOfStepsEl || !pageNumberInput || !stepToContainer) return;
+
+        var wrap = document.createElement('div');
+        wrap.id = 'step_slider_wrap';
+        var slider = document.createElement('input');
+        slider.type = 'range';
+        slider.id = 'step_slider';
+        slider.min = 1;
+        slider.max = 1;
+        slider.value = 1;
+        wrap.appendChild(slider);
+        numberOfStepsEl.parentNode.insertBefore(wrap, numberOfStepsEl.nextSibling);
+
+        var centerWrap = document.createElement('div');
+        centerWrap.id = 'top_step_center';
+        topButtons.insertBefore(centerWrap, stepToContainer);
+        centerWrap.appendChild(stepToContainer);
+        centerWrap.appendChild(numberOfStepsEl);
+        centerWrap.appendChild(wrap);
+        var spacer = document.createElement('div');
+        spacer.className = 'top_step_spacer';
+        topButtons.insertBefore(spacer, topButtons.firstChild);
+        var homeBtn = document.getElementById('home_button');
+        if (homeBtn && homeBtn.parentNode === topButtons) {
+          var rightWrap = document.createElement('div');
+          rightWrap.className = 'top_step_right_wrap';
+          topButtons.appendChild(rightWrap);
+          rightWrap.appendChild(homeBtn);
+        }
+
+        function updateSliderMax() {
+          var text = (numberOfStepsEl.textContent || numberOfStepsEl.innerText || '').trim();
+          var m = text.match(/\/\s*(\d+)/);
+          var total = m ? parseInt(m[1], 10) : 1;
+          if (total >= 1) {
+            slider.max = total;
+            if (parseInt(slider.value, 10) > total) slider.value = total;
+          }
+        }
+
+        var observer = new MutationObserver(function() { updateSliderMax(); });
+        observer.observe(numberOfStepsEl, { childList: true, characterData: true, subtree: true });
+        updateSliderMax();
+
+        slider.addEventListener('input', function() {
+          var step = parseInt(slider.value, 10);
+          pageNumberInput.value = step;
+          if (window.manager) window.manager.goToStep(step);
+        });
+
+        setInterval(function() {
+          var current = parseInt(pageNumberInput.value, 10);
+          if (!isNaN(current) && parseInt(slider.value, 10) !== current) {
+            slider.value = Math.min(Math.max(1, current), parseInt(slider.max, 10) || 1);
+          }
+        }, 200);
+      }
+
+      document.getElementById('btn-start').addEventListener('click', function() {
+        document.getElementById('intro').classList.add('hidden');
+        main();
+      });
+
+      (function introMouseSway() {
+        var title = document.getElementById('intro-title');
+        var intro = document.getElementById('intro');
+        if (!title || !intro) return;
+        function onMove(e) {
+          if (!intro.classList.contains('hidden')) {
+            var w = window.innerWidth;
+            var h = window.innerHeight;
+            var x = (e.clientX / w) * 2 - 1;
+            var y = (e.clientY / h) * 2 - 1;
+            title.style.setProperty('--sway-x', (x * 4) + 'deg');
+            title.style.setProperty('--sway-tx', x * 8);
+            title.style.setProperty('--sway-ty', y * 6);
+          }
+        }
+        window.addEventListener('mousemove', onMove);
+      })();
+
+      function setupHomeClose() {
+        var home = document.getElementById('home_button');
+        if (!home) return;
+        home.removeAttribute('href');
+        home.addEventListener('click', function(e) {
+          e.preventDefault();
+          document.getElementById('intro').classList.remove('hidden');
+          document.getElementById('instructions-view').style.display = 'none';
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

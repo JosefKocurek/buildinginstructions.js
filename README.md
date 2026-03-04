@@ -65,6 +65,18 @@ For earlier versions of python, the following should work:
 
 Feel free to raise issues or make pull requests. The project is in active development.
 
+## Deploy na Vercel (DSH viewer)
+
+Pro publikaci DSH vieweru (`dsh-viewer.html`) na Vercel:
+
+1. **Root Directory** – v nastavení projektu na [vercel.com](https://vercel.com) ponechte **Root Directory prázdné** (nebo `.`). Viewer očekává kořen repozitáře jako kořen webu (složky `css/`, `js/`, `models/`, `ldraw_parts/` atd. musí být vedle `dsh-viewer.html`).
+
+2. **Build** – projekt je čistě statický (HTML, JS, CSS, modely). Vercel nepotřebuje build krok; stačí nasadit soubory.
+
+3. **Hlavní stránka** – v repozitáři je soubor `vercel.json` s pravidlem: kořenová URL (`/`) zobrazí `dsh-viewer.html`. Odkaz na viewer tedy může být např. `https://tvoje-projekt.vercel.app/` nebo `https://tvoje-projekt.vercel.app/dsh-viewer.html`.
+
+4. Propojení repozitáře: *Import Git Repository* → vyber tento repo → *Root Directory* nech prázdné → *Deploy*.
+
 ## Vision
 
 - Generate LEGO building instructions, parts lists, and 3D models directly in the web browser.

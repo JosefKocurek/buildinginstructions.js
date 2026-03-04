@@ -191,7 +191,7 @@ THREE.LDRLoader.prototype.reportProgress = function(id) {
     }
 };
 
-THREE.LDRLoader.prototype.parseColor = function(colorID) {
+THREE.LDRLoader.prototype.parseColor = function(colorID, lineNum, subModelId) {
     if(colorID.length === 9 && colorID.substring(0, 3) === '0x2') {
 	// Direct color: https://www.ldraw.org/article/218.html
 	let hexValue = parseInt(colorID.substring(3), 16);
@@ -200,7 +200,7 @@ THREE.LDRLoader.prototype.parseColor = function(colorID) {
     }
     if(LDR.Colors[colorID] === undefined) {
 	// This color might be on the form "0x2995220", such as seen in 3626bps5.dat:
-	this.onWarning({message:'Unknown color "' + colorID + '". Black (0) will be shown instead.', line:i, subModel:part.ID});
+	this.onWarning({message:'Unknown color "' + colorID + '". Black (0) will be shown instead.', line:lineNum, subModel:subModelId});
 	return 0;
     }
     return parseInt(colorID);
@@ -246,8 +246,7 @@ THREE.LDRLoader.prototype.parse = function(data, defaultID) {
     let inTexmapFallback = false;
 
     let dataLines = data.split(/(\r\n)|\n/);
-    let i;
-    for(i = 0; i < dataLines.length; i++) {
+    for(let i = 0; i < dataLines.length; i++) {
 	let line = dataLines[i];
 	if(!line) {
 	    continue; // Empty line, or 'undefined' due to '\r\n' split.
@@ -278,7 +277,7 @@ THREE.LDRLoader.prototype.parse = function(data, defaultID) {
 
         let colorID;
 	if(lineType !== 0) {
-	    colorID = self.parseColor(parts[1]);
+	    colorID = self.parseColor(parts[1], i, part.ID);
 	}
 
         // Expire texmapPlacement:
@@ -511,7 +510,7 @@ THREE.LDRLoader.prototype.parse = function(data, defaultID) {
                 saveThisCommentLine = false;
 	    }
 	    else if(is("!PREVIEW")) {
-		colorID = self.parseColor(parts[2]);
+		colorID = self.parseColor(parts[2], i, part.ID);
 		for(let j = 3; j < 15; j++) {
 		    parts[j] = parseFloat(parts[j]);
 		}

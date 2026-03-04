@@ -13,6 +13,7 @@ LDR.InstructionsManager = function(modelUrl, modelID, modelColor, mainImage, ref
     this.pliMaxWidthPercentage = options.hasOwnProperty('pliMaxWidthPercentage') ? options.pliMaxWidthPercentage : 40;
     this.pliMaxHeightPercentage = options.hasOwnProperty('pliMaxHeightPercentage') ? options.pliMaxHeightPercentage : 35;
     this.animateUIElements = options.hasOwnProperty('animateUIElements') ? options.animateUIElements : false;
+    this.preserveViewOnStepChange = options.preserveViewOnStepChange === true;
 
     LDR.Colors.canBeOld = true;
 
@@ -508,7 +509,9 @@ LDR.InstructionsManager.prototype.onWindowResize = function(force){
     this.updateViewPort();
     this.updateCameraZoom();
     if(this.stepHandler) {
-        this.realignModel(0);
+        if (!this.preserveViewOnStepChange) {
+            this.realignModel(0);
+        }
         this.updateUIComponents(false);
     }
 }
@@ -645,7 +648,9 @@ LDR.InstructionsManager.prototype.updateViewPort = function(overwriteSize) {
 	size = LDR.tmpSize.length();
     }
 
-    this.camera.position.set(10*size, 7*size, 10*size);
+    if (!this.preserveViewOnStepChange) {
+	this.camera.position.set(10*size, 7*size, 10*size);
+    }
     this.camera.far = 2*15.7797*size; // Roughly double the camera distance, so that we can see to the other side.
 
     let dx = 0;
@@ -886,7 +891,13 @@ LDR.InstructionsManager.prototype.handleStepsWalked = function() {
     window.history.replaceState(this.currentStep, null, this.baseURL + this.currentStep);
 
     this.onWindowResize(true); // Ensure composer and passes are set up correctly.
-    this.realignModel(0);
+    if (this.preserveViewOnStepChange) {
+        this.updateViewPort();
+        this.updateCameraZoom();
+        this.render();
+    } else {
+        this.realignModel(0);
+    }
     this.onPLIMove(true);
     this.updateUIComponents(false);
 
@@ -914,7 +925,12 @@ LDR.InstructionsManager.prototype.nextStep = function() {
     }
 
     let self = this;
-    this.realignModel(1, () => self.stepHandler.nextStep(false), () => self.handleStepsWalked());
+    if (this.preserveViewOnStepChange) {
+        this.stepHandler.nextStep(false);
+        this.handleStepsWalked();
+    } else {
+        this.realignModel(1, () => self.stepHandler.nextStep(false), () => self.handleStepsWalked());
+    }
 }
 
 LDR.InstructionsManager.prototype.prevStep = function() {
@@ -923,7 +939,12 @@ LDR.InstructionsManager.prototype.prevStep = function() {
     }
 
     let self = this;
-    this.realignModel(-1, () => self.stepHandler.prevStep(false), () => self.handleStepsWalked());
+    if (this.preserveViewOnStepChange) {
+        this.stepHandler.prevStep(false);
+        this.handleStepsWalked();
+    } else {
+        this.realignModel(-1, () => self.stepHandler.prevStep(false), () => self.handleStepsWalked());
+    }
 }
 
 LDR.InstructionsManager.prototype.clickDone = function() {

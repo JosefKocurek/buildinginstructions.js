@@ -268,27 +268,22 @@ LDR.PLIBuilder.prototype.drawPLIForStep = function(fillHeight, step, maxWidth, m
         }
         this.clickMap.forEach(drawMultiplier);
     }
-    // Draw Annotation:
-    context.font = parseInt(textHeight*0.8*DPR) + "px monospace";
+    // Draw Annotation (black frame, white text, smaller, no rounding):
+    context.font = parseInt(textHeight*0.52*DPR) + "px monospace";
+    context.textBaseline = 'top';
     this.clickMap.filter(icon => icon.annotation).forEach(icon => {
 	let len = icon.annotation.length;
 	let x = (icon.x+icon.FULL_DX+1)*DPR;
 	let y = (icon.y+icon.ANNO_Y)*DPR;
-	let w = (len*textHeight*0.54)*DPR;
-	let h = textHeight*DPR;
-	context.beginPath();
-	context.fillStyle = "#CFF";
-	if(icon.desc && icon.desc.startsWith('Technic Axle')) {
-	    context.arc(x+w*0.45, y+h*0.55, h*(0.15 + len*0.18), 0, 2*Math.PI, false);
-        }
-	else {
-	    context.rect(x, y, w, h);
-        }
-	context.fill();
-	context.stroke();
-	context.fillStyle = "#25E";
-	y += textHeight*DPR*0.79;
-	context.fillText(icon.annotation, x, y);
+	let w = (len*textHeight*0.38)*DPR;
+	let h = textHeight*0.7*DPR;
+	context.strokeStyle = "#000";
+	context.lineWidth = 1;
+	context.fillStyle = "#000";
+	context.fillRect(x, y, w, h);
+	context.strokeRect(x, y, w, h);
+	context.fillStyle = "#fff";
+	context.fillText(icon.annotation, x + 2, y + h*0.15);
     });
     // Draw highlight for ghosted parts:
     if(this.showEditor) {
